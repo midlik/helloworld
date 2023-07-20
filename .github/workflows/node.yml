@@ -24,13 +24,17 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
     - name: Print github.ref
       run: echo ${{ github.ref }}
     - name: Print github.ref_type
       run: echo ${{ github.ref_type }}
     - name: Print github.ref_name
       run: echo ${{ github.ref_name }}
+    - name: Check tag validity
+      run: echo ${{ github.ref_name }} | egrep '^v?[0-9]+\.[0-9]+\.[0-9]+'
     - name: Print version
       run: TAG=${{ github.ref_name }} && echo ${TAG#v}
     - run: env
+    - name: Print version once again
+      run: echo ${TAG#v}
+    - uses: actions/checkout@v3
