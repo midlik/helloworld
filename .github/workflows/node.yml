@@ -2,8 +2,6 @@ name: Having fun
 
 on:
   push:
-    # branches: *
-    # tags: v?[0-9]+.[0-9]+.[0-9]+
   pull_request:
 
 jobs:
@@ -19,26 +17,16 @@ jobs:
       run: echo ${{ github.ref_name }}
     - run: env
 
-  tag:
+  validate_tag:
     if: github.ref_type == 'tag'
-    needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Print github.ref
-      run: echo ${{ github.ref }}
-    - name: Print github.ref_type
-      run: echo ${{ github.ref_type }}
-    - name: Print github.ref_name
-      run: echo ${{ github.ref_name }}
-    - name: Check tag validity
-      run: echo ${{ github.ref_name }} | egrep '^v?[0-9]+\.[0-9]+\.[0-9]+\S*$'
-    - name: Print version
-      run: export TAG=${{ github.ref_name }} && echo ${TAG#v}
-    - run: env
-    - name: Print version once again
-      run: echo ${TAG#v}
-    - name: Print env.TAG
-      run: echo ${{ env.TAG }}
-    - name: Print vars.TAG
-      run: echo ${{ vars.TAG }}
-    - uses: actions/checkout@v3
+    - name: Check that tag follow semantic versioning (must not start with "v")
+      run: echo ${{ github.ref_name }} | egrep '^[0-9]+\.[0-9]+\.[0-9]+\S*$'
+
+  release:
+    needs: [build, validate_tag]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Print happy message
+      run: echo The tag is ${{ github.ref_name }}
