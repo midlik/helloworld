@@ -1,16 +1,16 @@
 name: Having fun
 
 on:
-  push
-  pull_request
+  push:
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: echo "I am having fun"
+    - run: echo "I am having fun on push"
     - run: echo ${{ github.ref }}
     - run: echo ${{ github.ref_type }}
     - run: echo ${{ github.ref_name }}
-  
+    - run: env
