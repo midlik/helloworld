@@ -32,5 +32,5 @@ jobs:
     - name: Print github.ref_name
       run: echo ${{ github.ref_name }}
     - name: Print version
-      run: echo ${{ github.ref_name#v }}
+      run: TAG=${{ github.ref_name }} && echo ${TAG#v}
     - run: env
