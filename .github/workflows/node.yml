@@ -31,10 +31,14 @@ jobs:
     - name: Print github.ref_name
       run: echo ${{ github.ref_name }}
     - name: Check tag validity
-      run: echo ${{ github.ref_name }} | egrep '^v?[0-9]+\.[0-9]+\.[0-9]+'
+      run: echo ${{ github.ref_name }} | egrep '^v?[0-9]+\.[0-9]+\.[0-9]+\S*$'
     - name: Print version
-      run: TAG=${{ github.ref_name }} && echo ${TAG#v}
+      run: export TAG=${{ github.ref_name }} && echo ${TAG#v}
     - run: env
     - name: Print version once again
       run: echo ${TAG#v}
+    - name: Print env.TAG
+      run: echo ${{ env.TAG }}
+    - name: Print vars.TAG
+      run: echo ${{ vars.TAG }}
     - uses: actions/checkout@v3
