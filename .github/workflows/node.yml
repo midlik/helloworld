@@ -2,6 +2,8 @@ name: Having fun
 
 on:
   push:
+    # branches: *
+    # tags: v?[0-9]+.[0-9]+.[0-9]+
   pull_request:
 
 jobs:
@@ -9,8 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: echo "I am having fun on push"
-    - run: echo ${{ github.ref }}
-    - run: echo ${{ github.ref_type }}
-    - run: echo ${{ github.ref_name }}
+    - name: Print github.ref
+      run: echo ${{ github.ref }}
+    - name: Print github.ref_type
+      run: echo ${{ github.ref_type }}
+    - name: Print github.ref_name
+      run: echo ${{ github.ref_name }}
+    - run: env
+
+  tag:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Print github.ref
+      run: echo ${{ github.ref }}
+    - name: Print github.ref_type
+      run: echo ${{ github.ref_type }}
+    - name: Print github.ref_name
+      run: echo ${{ github.ref_name }}
+    - name: Print version
+      run: echo ${{ github.ref_name#v }}
     - run: env
