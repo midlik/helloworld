@@ -1,32 +1,32 @@
-name: Having fun
+# name: Having fun
 
-on:
-  push:
-  pull_request:
+# on:
+#   push:
+#   pull_request:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Print github.ref
-      run: echo ${{ github.ref }}
-    - name: Print github.ref_type
-      run: echo ${{ github.ref_type }}
-    - name: Print github.ref_name
-      run: echo ${{ github.ref_name }}
-    - run: env
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v3
+#     - name: Print github.ref
+#       run: echo ${{ github.ref }}
+#     - name: Print github.ref_type
+#       run: echo ${{ github.ref_type }}
+#     - name: Print github.ref_name
+#       run: echo ${{ github.ref_name }}
+#     - run: env
 
-  validate_tag:
-    if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check that tag follow semantic versioning (must not start with "v")
-      run: echo ${{ github.ref_name }} | egrep '^[0-9]+\.[0-9]+\.[0-9]+\S*$'
+#   validate_tag:
+#     if: github.ref_type == 'tag'
+#     runs-on: ubuntu-latest
+#     steps:
+#     - name: Check that tag follow semantic versioning (must not start with "v")
+#       run: echo ${{ github.ref_name }} | egrep '^[0-9]+\.[0-9]+\.[0-9]+\S*$'
 
-  release:
-    needs: [build, validate_tag]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Print happy message
-      run: echo The tag is ${{ github.ref_name }}
+#   release:
+#     needs: [build, validate_tag]
+#     runs-on: ubuntu-latest
+#     steps:
+#     - name: Print happy message
+#       run: echo The tag is ${{ github.ref_name }}

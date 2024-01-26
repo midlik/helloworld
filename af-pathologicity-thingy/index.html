@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>AlphaFold Pathologicity View Prototype</title>
+
+    <!-- Molstar CSS & JS -->
+    <link rel="stylesheet" type="text/css"
+        href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-light-3.1.3.css">
+    <script type="text/javascript"
+        src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-3.1.3.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            padding-block: 30px;
+            padding-inline: 40px;
+        }
+
+        h1,
+        .controlSection {
+            font-family: "IBM Plex Sans", sans-serif;
+        }
+
+        .msp-plugin ::-webkit-scrollbar-thumb {
+            background-color: #474748 !important;
+        }
+
+        #myViewer {
+            width: 900px;
+            height: 600px;
+            position: relative;
+            margin-block: 20px;
+        }
+
+        button {
+            margin-right: 10px;
+            margin-bottom: 15px;
+            padding: 4px;
+        }
+
+        .legend-square {
+            display: inline-block;
+            width: 0.8em;
+            height: 0.8em;
+            border: solid black 1px;
+            margin-right: 5px;
+        }
+
+        p {
+            padding-block: 0.08em;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="viewerSection">
+        <h1>AlphaFold Pathologicity View Prototype</h1>
+        <!-- Molstar container -->
+        <div id="myViewer"></div>
+    </div>
+
+    <div class="controlSection">
+        <button onclick="colorByData()">
+            Color by pathologicity
+        </button>
+        <button onclick="viewerInstance.visual.clearSelection()">
+            Color by pLDDT
+        </button>
+        <div>
+            <p><strong>Pathologicity classes</strong></p>
+            <p><div class="legend-square" style="background-color: #f0ff8c;"></div>Benign</p>
+            <p><div class="legend-square" style="background-color: #ff9632;"></div>Ambiguous</p>
+            <p><div class="legend-square" style="background-color: #c80028;"></div>Pathological</p>
+        </div>
+    </div>
+
+
+    <script>
+        const BASE = { r: 255, g: 255, b: 255 };
+        const COLOR_MAP = {
+            benign: { r: 240, g: 255, b: 150 },
+            ambiguous: { r: 255, g: 150, b: 50 },
+            pathological: { r: 200, g: 0, b: 40 },
+        }
+
+        function parseData(data) {
+            const DELIMITER = '\t';
+            const SEQ_ID_COLUMN = 0;
+            const CLASS_COLUMN = 1;
+            const N_HEADER_ROWS = 1;
+            const lines = data.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
+            if (N_HEADER_ROWS > 0) lines.splice(0, N_HEADER_ROWS);
+            const rows = lines.map(line => line.split(DELIMITER));
+            const colors = rows.map(row => [Number(row[SEQ_ID_COLUMN]), COLOR_MAP[row[CLASS_COLUMN]]]);
+            // console.log(colors);
+            return colors;
+        }
+
+        function colorByData() {
+            fetch('data.tsv')
+                .then(response => response.text())
+                .then(data => parseData(data))
+                .then(colors => viewerInstance.visual.select({
+                    data: [
+                        { struct_asym_id: 'A', color: BASE },
+                        ...colors.map(x => ({ struct_asym_id: 'A', residue_number: x[0], color: x[1] })),
+                    ],
+                }));
+        }
+
+
+        // Create plugin instance
+        const viewerInstance = new PDBeMolstarPlugin();
+        const options = {
+            customData: {
+                url: 'https://alphafold.ebi.ac.uk/files/AF-O15552-F1-model_v4.cif',
+                format: 'cif',
+                binary: false,
+            },
+            subscribeEvents: false,
+            bgColor: { r: 255, g: 255, b: 255 },
+            selectInteraction: false,
+            alphafoldView: true,
+            reactive: true,
+            sequencePanel: true,
+            hideCanvasControls: ['animation'],
+            pdbeLink: false,
+        };
+        const viewerContainer = document.getElementById('myViewer');
+        viewerInstance.render(viewerContainer, options);
+
+        viewerInstance.events.loadComplete.subscribe(colorByData);
+
+    </script>
+</body>
+
+</html>
