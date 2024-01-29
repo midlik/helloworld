@@ -77,9 +77,12 @@
         </button>
         <div>
             <p><strong>Pathologicity classes</strong></p>
-            <p><div class="legend-square" style="background-color: #3e52a4;"></div>Benign</p>
-            <p><div class="legend-square" style="background-color: #c8c8c8;"></div>Ambiguous</p>
-            <p><div class="legend-square" style="background-color: #ee3d39;"></div>Pathological</p>
+            <p>
+            <div class="legend-square" style="background-color: #3e52a4;"></div>Benign</p>
+            <p>
+            <div class="legend-square" style="background-color: #c8c8c8;"></div>Ambiguous</p>
+            <p>
+            <div class="legend-square" style="background-color: #ee3d39;"></div>Pathological</p>
         </div>
     </div>
 
@@ -106,7 +109,8 @@
         }
 
         function colorByData() {
-            fetch('data.tsv')
+            console.time('colorByData');
+            fetch(`data-${accession}.tsv`)
                 .then(response => response.text())
                 .then(data => parseData(data))
                 .then(colors => viewerInstance.visual.select({
@@ -114,15 +118,18 @@
                         { struct_asym_id: 'A', color: BASE },
                         ...colors.map(x => ({ struct_asym_id: 'A', residue_number: x[0], color: x[1] })),
                     ],
-                }));
+                }))
+                .then(() => console.timeEnd('colorByData'));
         }
 
+        // const accession = 'O15552';
+        const accession = 'P08169';
 
         // Create plugin instance
         const viewerInstance = new PDBeMolstarPlugin();
         const options = {
             customData: {
-                url: 'https://alphafold.ebi.ac.uk/files/AF-O15552-F1-model_v4.cif',
+                url: `https://alphafold.ebi.ac.uk/files/AF-${accession}-F1-model_v4.cif`,
                 format: 'cif',
                 binary: false,
             },
@@ -138,7 +145,7 @@
         const viewerContainer = document.getElementById('myViewer');
         viewerInstance.render(viewerContainer, options);
 
-        viewerInstance.events.loadComplete.subscribe(colorByData);
+        viewerInstance.events.loadComplete.subscribe(() => colorByData());
 
     </script>
 </body>
