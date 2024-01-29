@@ -78,11 +78,11 @@
         <div>
             <p><strong>Pathologicity classes</strong></p>
             <p>
-            <div class="legend-square" style="background-color: #3e52a4;"></div>Benign</p>
+            <div class="legend-square" style="background-color: #0000bb;"></div>Benign</p>
             <p>
-            <div class="legend-square" style="background-color: #c8c8c8;"></div>Ambiguous</p>
+            <div class="legend-square" style="background-color: #ffffff;"></div>Ambiguous</p>
             <p>
-            <div class="legend-square" style="background-color: #ee3d39;"></div>Pathological</p>
+            <div class="legend-square" style="background-color: #ff0000;"></div>Pathological</p>
         </div>
     </div>
 
@@ -92,25 +92,67 @@
         const COLOR_MAP = {
             benign: { r: 62, g: 82, b: 164 },
             ambiguous: { r: 200, g: 200, b: 200 },
-            pathological: { r: 238, g: 61, b: 57 },
+            pathogenic: { r: 238, g: 61, b: 57 },
+            // pathological: { r: 238, g: 61, b: 57 },
+        }
+        const COLOR_MAP_CONTINUOUS = {
+            min: { r: 0, g: 0, b: 187 }, // #
+            center: { r: 255, g: 255, b: 255 }, // #ffffff
+            max: { r: 255, g: 0, b: 0 }, // #ff0000
         }
 
         function parseData(data) {
-            const DELIMITER = '\t';
-            const SEQ_ID_COLUMN = 0;
-            const CLASS_COLUMN = 1;
-            const N_HEADER_ROWS = 1;
+            const DELIMITER = ',';
+            const MUTATION_COLUMN = 0;
+            const SCORE_COLUMN = 1;
+            const CLASS_COLUMN = 2;
+            const N_HEADER_ROWS = 0;
             const lines = data.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#'));
             if (N_HEADER_ROWS > 0) lines.splice(0, N_HEADER_ROWS);
             const rows = lines.map(line => line.split(DELIMITER));
-            const colors = rows.map(row => [Number(row[SEQ_ID_COLUMN]), COLOR_MAP[row[CLASS_COLUMN]]]);
-            // console.log(colors);
+            const scores = {}; // { [seq_id: number]: number[] }
+            for (const row of rows) {
+                const mutation = row[MUTATION_COLUMN];
+                const score = Number(row[SCORE_COLUMN]);
+                const cls = row[CLASS_COLUMN];
+                const match = mutation.match(/([A-Za-z]+)([0-9]+)([A-Za-z]+)/);
+                const seq_id = match[2];
+                (scores[seq_id] ??= []).push(score);
+            }
+            const colors = [];
+            for (const seq_id in scores) {
+                const aggrScore = aggregationFunction(scores[seq_id]);
+                const color = assignColor(aggrScore);
+                colors.push([Number(seq_id), color]);
+            }
             return colors;
+        }
+
+        function mean(values) {
+            return values.reduce((a, b) => a + b, 0) / values.length;
+        }
+        const aggregationFunction = mean; // The original paper also uses mean (https://www.science.org/doi/10.1126/science.adg7492)
+
+        function assignColor1(score) {
+            if (score < 0.35) return COLOR_MAP.benign;
+            if (score < 0.60) return COLOR_MAP.ambiguous;
+            return COLOR_MAP.pathogenic;
+        }
+        function assignColor(score) {
+            if (score <= 0.5) return mixColor(COLOR_MAP_CONTINUOUS.min, COLOR_MAP_CONTINUOUS.center, 2 * score);
+            else return mixColor(COLOR_MAP_CONTINUOUS.center, COLOR_MAP_CONTINUOUS.max, 2 * score - 1);
+        }
+        function mixColor(color0, color1, q) {
+            return {
+                r: color0.r * (1 - q) + color1.r * q,
+                g: color0.g * (1 - q) + color1.g * q,
+                b: color0.b * (1 - q) + color1.b * q,
+            };
         }
 
         function colorByData() {
             console.time('colorByData');
-            fetch(`data-${accession}.tsv`)
+            fetch(`data/${accession}-aa-substitutions.csv`)
                 .then(response => response.text())
                 .then(data => parseData(data))
                 .then(colors => viewerInstance.visual.select({
@@ -123,7 +165,8 @@
         }
 
         // const accession = 'O15552';
-        const accession = 'P08169';
+        // const accession = 'P08169';
+        const accession = 'A0A0A0MRZ7';  // A0A0A0MRZ7, A0A0A0MRZ8, A0A0A0MRZ9, A0A0A0MS00,
 
         // Create plugin instance
         const viewerInstance = new PDBeMolstarPlugin();
